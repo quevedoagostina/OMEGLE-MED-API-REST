@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
+const authRoutes = require('./src/routes/authRoutes');
+const authenticateToken = require('./src/middleware/authMiddleware');
 
 dotenv.config();
 
@@ -13,6 +15,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
   res.send('Servidor funcionando correctamente');
+});
+
+app.use('/users', authRoutes);
+
+app.get('/protected', authenticateToken, (req, res) => {
+  res.json({ message: 'Accediste a una ruta protegida' });
 });
 
 const PORT = process.env.PORT || 4000;
