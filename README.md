@@ -70,6 +70,9 @@ npx sequelize-cli db:migrate:undo
 ### 4. Crear un nuevo seeders
 npx sequelize-cli seed:generate --name create-user
 
+### 5. Thunderclient
+thunder collection avaible to test all endpoints
+
 ## Estructura del Proyecto
 ├── src  
 │   ├── config  

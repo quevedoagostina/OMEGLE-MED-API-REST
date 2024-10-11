@@ -1,41 +1,42 @@
-const User = require('../models/user');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('../models');
 
-const createUser = async (req, res) => {
-  try {
+// Registro de usuario
+exports.register = async (req, res) => {
     const { name, email, password, role } = req.body;
-    const user = await User.create({ name, email, password, role });
-    res.status(201).json(user);
-  } catch (error) {
-    console.error(error); // Imprime el error en la consola
-    res.status(500).json({ error: 'Error creando el usuario' });
-  }
-};
-
-const getUsers = async (req, res) => {
-  try {
-    const users = await User.findAll();
-    res.status(200).json(users);
-  } catch (error) {
-    console.error(error); // Imprime el error en la consola
-    res.status(500).json({ error: 'Error obteniendo los usuarios' });
-  }
-};
-
-
-const getUserById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findByPk(id);
-
-    if (!user) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+    try {
+        const user = await db.User.create({ name, email, password, role });
+        res.status(201).json({ message: 'Usuario registrado', user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al registrar usuario' });
     }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error obteniendo el usuario' });
-  }
 };
 
-module.exports = { createUser, getUsers, getUserById };
+// Inicio de sesión (Login)
+exports.login = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await db.User.findOne({ where: { email } });
+        if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ message: 'Contraseña incorrecta' });
+        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.status(200).json({ token });
+    } catch (error) {
+        console.error(error); // Esto registrará el error en la consola
+        res.status(500).json({ error: 'Error al iniciar sesión' });
+    }
+};
+
+// Obtener perfil de usuario autenticado
+exports.getProfile = async (req, res) => {
+    try {
+        const user = await db.User.findByPk(req.user.id);
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener el perfil' });
+    }
+};
